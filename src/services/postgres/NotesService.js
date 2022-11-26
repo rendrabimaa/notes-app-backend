@@ -30,8 +30,20 @@ class NotesService {
     return result.rows[0].id;
   }
 
-  async getNotes() {
-    const result = await this._pool.query('SELECT * FROM notes');
+  async getNotes(title) {
+    let query = '';
+    if (title) {
+      query = {
+        text: 'SELECT * FROM notes WHERE LOWER(title) LIKE $1',
+        values: [`%${title.toLowerCase()}%`],
+      };
+    } else {
+      query = {
+        text: 'SELECT * FROM notes',
+      };
+    }
+
+    const result = await this._pool.query(query);
     return result.rows.map(mapDBNotesToModel);
   }
 

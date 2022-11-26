@@ -3,6 +3,7 @@ const { nanoid } = require('nanoid');
 const { Pool } = require('pg');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
+const { mapDBNotesToModel } = require('../../utils');
 
 class CategoriesService {
   constructor() {
@@ -26,8 +27,18 @@ class CategoriesService {
     return result.rows[0].id;
   }
 
-  async getCategories() {
-    const result = await this._pool.query('SELECT * FROM categories');
+  async getCategories(name) {
+    let query = '';
+    if (name) {
+      query = {
+        text: 'SELECT * FROM categories WHERE LOWER(name) LIKE $1',
+        values: [`%${name.toLowerCase()}%`],
+      };
+    } else {
+      query = 'SELECT * FROM categories';
+    }
+
+    const result = await this._pool.query(query);
     return result.rows;
   }
 
@@ -43,6 +54,24 @@ class CategoriesService {
     }
 
     return result.rows[0];
+  }
+
+  async getNotesInCategory(id, title) {
+    let query = '';
+    if (title) {
+      query = {
+        text: 'SELECT * FROM notes WHERE LOWER(title) LIKE $1 AND "category_id" = $2',
+        values: [`%${title.toLowerCase()}%`, id],
+      };
+    } else {
+      query = {
+        text: 'SELECT * FROM notes WHERE "category_id" = $2',
+        values: [id],
+      };
+    }
+
+    const result = await this._pool.query(query);
+    return result.rows.map(mapDBNotesToModel);
   }
 
   async editCategoryById(id, { name }) {
