@@ -11,7 +11,9 @@ class CategoriesHandler {
   async postCategoryHandler(request, h) {
     this._validator.validateCategoryPayload(request.payload);
     const { name } = request.payload;
-    const categoryId = await this._service.addCategory({ name });
+    const { id: credentialId } = request.auth.credentials;
+
+    const categoryId = await this._service.addCategory({ name, owner: credentialId });
 
     const response = h.response({
       status: 'success',
@@ -25,8 +27,9 @@ class CategoriesHandler {
   }
 
   async getCategoriesHandler(request) {
+    const { id: credentialId } = request.auth.credentials;
     const { name } = request.query;
-    const categories = await this._service.getCategories(name);
+    const categories = await this._service.getCategories(name, credentialId);
     return {
       status: 'success',
       data: {
@@ -37,12 +40,18 @@ class CategoriesHandler {
 
   async getCategoryByIdHandler(request) {
     const { id } = request.params;
-    const category = await this._service.getCategoryById(id);
+    const { id: credentialId } = request.auth.credentials;
+    await this._service.verifyOwner(id, credentialId);
+
+    const category = await this._service.getCategoryById(id, credentialId);
+    const notes = await this._service.getNotesByCategoryId(id, credentialId);
+
+    const notesInCategory = { ...category, notes };
 
     return {
       status: 'success',
       data: {
-        category,
+        category: notesInCategory,
       },
     };
   }
@@ -50,6 +59,9 @@ class CategoriesHandler {
   async putCategoryByIdHandler(request) {
     this._validator.validateCategoryPayload(request.payload);
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.verifyOwner(id, credentialId);
     await this._service.editCategoryById(id, request.payload);
 
     return {
@@ -60,6 +72,9 @@ class CategoriesHandler {
 
   async deleteCategoryByIdHandler(request) {
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.verifyOwner(id, credentialId);
     await this._service.deleteCategoryById(id);
 
     return {

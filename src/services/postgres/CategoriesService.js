@@ -4,18 +4,19 @@ const { Pool } = require('pg');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 const { mapDBNotesToModel } = require('../../utils');
+const AuthorizationError = require('../../exceptions/AuthorizationError');
 
 class CategoriesService {
   constructor() {
     this._pool = new Pool();
   }
 
-  async addCategory({ name }) {
+  async addCategory({ name, owner }) {
     const id = nanoid(16);
 
     const query = {
-      text: 'INSERT INTO categories VALUES($1, $2) RETURNING id',
-      values: [id, name],
+      text: 'INSERT INTO categories VALUES($1, $2, $3) RETURNING id',
+      values: [id, name, owner],
     };
 
     const result = await this._pool.query(query);
@@ -27,15 +28,18 @@ class CategoriesService {
     return result.rows[0].id;
   }
 
-  async getCategories(name) {
+  async getCategories(name, owner) {
     let query = '';
     if (name) {
       query = {
-        text: 'SELECT * FROM categories WHERE LOWER(name) LIKE $1',
-        values: [`%${name.toLowerCase()}%`],
+        text: 'SELECT * FROM categories WHERE LOWER(name) LIKE $1 AND owner = $2',
+        values: [`%${name.toLowerCase()}%`, owner],
       };
     } else {
-      query = 'SELECT * FROM categories';
+      query = {
+        text: 'SELECT * FROM categories WHERE owner = $1',
+        values: [owner],
+      };
     }
 
     const result = await this._pool.query(query);
@@ -56,7 +60,7 @@ class CategoriesService {
     return result.rows[0];
   }
 
-  async getNotesInCategory(id, title) {
+  async getNotesByCategoryId(id, title) {
     let query = '';
     if (title) {
       query = {
@@ -65,7 +69,7 @@ class CategoriesService {
       };
     } else {
       query = {
-        text: 'SELECT * FROM notes WHERE "category_id" = $2',
+        text: 'SELECT * FROM notes WHERE "category_id" = $1',
         values: [id],
       };
     }
@@ -97,6 +101,25 @@ class CategoriesService {
 
     if (!result.rows.length) {
       throw new NotFoundError('kategori gagal dihapus. Id tidak ditemukan');
+    }
+  }
+
+  async verifyOwner(id, owner) {
+    const query = {
+      text: 'SELECT * FROM categories WHERE id = $1',
+      values: [id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError('Resource yang Anda minta tidak ditemukan');
+    }
+
+    const category = result.rows[0];
+
+    if (category.owner !== owner) {
+      throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
     }
   }
 }
