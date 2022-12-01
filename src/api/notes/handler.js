@@ -10,6 +10,7 @@ class NotesHandler {
 
   async postNoteHandler(request, h) {
     this._validator.validateNotePayload(request.payload);
+
     const {
       title, cue, main, summary, categoryId,
     } = request.payload;
@@ -27,17 +28,6 @@ class NotesHandler {
     });
     response.code(201);
     return response;
-  }
-
-  async getNotesHandler(request) {
-    const { title } = request.query;
-    const notes = await this._service.getNotes(title);
-    return {
-      status: 'success',
-      data: {
-        notes,
-      },
-    };
   }
 
   async getNoteByIdHandler(request) {

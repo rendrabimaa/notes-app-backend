@@ -5,8 +5,9 @@ const { mapDBNotesToModel } = require('../../utils');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class NotesService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addNote({
@@ -28,23 +29,6 @@ class NotesService {
     }
 
     return result.rows[0].id;
-  }
-
-  async getNotes(title) {
-    let query = '';
-    if (title) {
-      query = {
-        text: 'SELECT * FROM notes WHERE LOWER(title) LIKE $1',
-        values: [`%${title.toLowerCase()}%`],
-      };
-    } else {
-      query = {
-        text: 'SELECT * FROM notes',
-      };
-    }
-
-    const result = await this._pool.query(query);
-    return result.rows.map(mapDBNotesToModel);
   }
 
   async getNoteById(id) {
