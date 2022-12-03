@@ -9,6 +9,14 @@ const routes = (handler) => [
     path: '/users/{id}',
     handler: handler.getUserByIdHandler,
   },
+  {
+    method: 'GET',
+    path: '/users/me',
+    handler: handler.getUserByMeHandler,
+    options: {
+      auth: 'notesapp_jwt',
+    },
+  },
 ];
 
 module.exports = routes;

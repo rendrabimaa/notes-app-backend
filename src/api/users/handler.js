@@ -37,6 +37,15 @@ class UsersHandler {
       },
     };
   }
+
+  async getUserByMeHandler(request) {
+    const { id: credentialId } = request.auth.credentials;
+    const user = await this._service.getUserById(credentialId);
+    return {
+      status: 'success',
+      data: user,
+    };
+  }
 }
 
 module.exports = UsersHandler;
