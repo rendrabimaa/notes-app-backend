@@ -62,7 +62,7 @@ class CategoriesService {
 
   async getNotesByCategoryId(id) {
     const query = {
-      text: "SELECT * FROM notes WHERE category_id = '$1'",
+      text: 'SELECT * FROM notes WHERE category_id = $1',
       values: [id],
     };
 
