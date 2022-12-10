@@ -60,19 +60,11 @@ class CategoriesService {
     return result.rows[0];
   }
 
-  async getNotesByCategoryId(id, title) {
-    let query = '';
-    if (title) {
-      query = {
-        text: "SELECT * FROM notes WHERE LOWER(title) LIKE $1 AND category_id = '$2'",
-        values: [`%${title.toLowerCase()}%`, id],
-      };
-    } else {
-      query = {
-        text: "SELECT * FROM notes WHERE category_id = '$1'",
-        values: [id],
-      };
-    }
+  async getNotesByCategoryId(id) {
+    const query = {
+      text: "SELECT * FROM notes WHERE category_id = '$1'",
+      values: [id],
+    };
 
     const result = await this._pool.query(query);
     return result.rows.map(mapDBNotesToModel);
