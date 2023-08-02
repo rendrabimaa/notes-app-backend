@@ -1,4 +1,5 @@
 const autoBind = require('auto-bind');
+const ClientError = require('../../exceptions/ClientError');
 
 class NotesHandler {
   constructor(service, validator) {
@@ -9,25 +10,30 @@ class NotesHandler {
   }
 
   async postNoteHandler(request, h) {
-    this._validator.validateNotePayload(request.payload);
-    const {
-      title, cue, main, summary, categoryId,
-    } = request.payload;
-    const { id: credentialId } = request.auth.credentials;
+    try {
+      this._validator.validateNotePayload(request.payload);
+      const {
+        title, cue, main, summary, categoryId,
+      } = request.payload;
+      const { id: credentialId } = request.auth.credentials;
 
-    const noteId = await this._service.addNote({
-      title, cue, main, summary, categoryId, owner: credentialId,
-    });
+      const noteId = await this._service.addNote({
+        title, cue, main, summary, categoryId, owner: credentialId,
+      });
 
-    const response = h.response({
-      status: 'success',
-      message: 'Catatan berhasil ditambahkan',
-      data: {
-        noteId,
-      },
-    });
-    response.code(201);
-    return response;
+      const response = h.response({
+        status: 'success',
+        message: 'Catatan berhasil ditambahkan',
+        data: {
+          noteId,
+        },
+      });
+      response.code(201);
+      return response;
+    } catch (error) {
+      console.log(error);
+      throw new ClientError('failed to insert database');
+    }
   }
 
   async getNotesHandler(request) {

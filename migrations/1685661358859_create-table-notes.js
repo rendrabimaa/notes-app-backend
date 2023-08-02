@@ -9,15 +9,15 @@ exports.up = (pgm) => {
       notNull: true,
     },
     cue: {
-      type: 'TEXT[]',
+      type: 'TEXT',
       notNull: true,
     },
     main: {
-      type: 'TEXT[]',
+      type: 'TEXT',
       notNull: true,
     },
     summary: {
-      type: 'TEXT[]',
+      type: 'TEXT',
       notNull: true,
     },
     created_at: {
@@ -31,6 +31,9 @@ exports.up = (pgm) => {
     category_id: {
       type: 'TEXT',
       notNull: true,
+    },
+    owner: {
+      type: 'VARCHAR(50)',
     },
   });
 };
